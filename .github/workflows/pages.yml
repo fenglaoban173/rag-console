@@ -1,0 +1,44 @@
+name: pages
+
+# 静态控制台的自动部署：推 main → GitHub Pages 重新发布。
+#
+# 发布的 site/ 目录（就是服务里的 web/ 那几个文件）。
+# 页面和 API 不同源时，用 ?api=<地址> 或页面上的设置告诉它往哪儿发请求，
+# 见 site/config.js。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只跑一次部署：连着推两次时，前一次直接取消，
+# 不然两次发布会抢同一个 Pages 站点。
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
