@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>知识库后台</title>
+<style>
+  :root{
+    --brand:#2f6fed;--brand-soft:#eef3ff;--ink:#141a23;--ink-2:#5a6472;--ink-3:#8b95a3;
+    --line:#e6e9ee;--bg:#f6f7f9;--card:#fff;--ok:#12805c;--ok-soft:#e9f7f1;--warn:#a55b00;--warn-soft:#fff8e8;
+    --bad:#b3261e;--bad-soft:#fdecea;--radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--brand);text-decoration:none}
+  .top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+  .top .in{max-width:1080px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:12px}
+  .logo{width:30px;height:30px;border-radius:9px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+  .top h1{font-size:15.5px;margin:0;font-weight:650;flex:1}
+  .top h1 small{display:block;font-weight:400;font-size:12px;color:var(--ink-3)}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:7px 13px;
+    font-size:13px;cursor:pointer;font-family:inherit;transition:.15s}
+  .btn:hover{border-color:#c9d2e0;background:#fafbfc}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.danger{color:var(--bad);border-color:#f0cfcc}
+  .btn.danger:hover{background:var(--bad-soft)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  main{max-width:1080px;margin:0 auto;padding:22px;display:flex;flex-direction:column;gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+  .card h2{font-size:14px;margin:0 0 4px;font-weight:650;display:flex;align-items:center;gap:8px}
+  .card .desc{color:var(--ink-3);font-size:12.5px;margin:0 0 14px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .stat .k{font-size:12px;color:var(--ink-3)}
+  .stat .v{font-size:22px;font-weight:650;letter-spacing:-.02em;margin-top:2px}
+  .stat .v small{font-size:12px;font-weight:400;color:var(--ink-3);margin-left:4px}
+  .drop{border:1.5px dashed #cfd7e3;border-radius:var(--radius);padding:26px;text-align:center;background:#fbfcfe;
+    cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--brand);background:var(--brand-soft)}
+  .drop b{display:block;font-size:13.5px;margin-bottom:3px}
+  .drop span{font-size:12px;color:var(--ink-3)}
+  .result{margin-top:12px;font-size:12.5px;display:flex;flex-direction:column;gap:6px}
+  .line{padding:8px 11px;border-radius:8px;background:#f7f9fb;border:1px solid var(--line)}
+  .line.ok{background:var(--ok-soft);border-color:#cfe7d9;color:var(--ok)}
+  .line.warn{background:var(--warn-soft);border-color:#f2e2c0;color:var(--warn)}
+  .line.bad{background:var(--bad-soft);border-color:#f5cdc8;color:var(--bad)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-weight:600;font-size:12px;color:var(--ink-3);padding:0 10px 8px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid #f0f2f5;vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  td.t{font-weight:550}
+  td.t small{display:block;font-weight:400;color:var(--ink-3);font-size:11.5px}
+  .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:20px;background:#f2f4f7;color:var(--ink-2)}
+  .tag.img{background:#eef3ff;color:var(--brand)}
+  .row-act{display:flex;gap:6px;justify-content:flex-end}
+  .row-act button{font-size:12px;padding:4px 9px;border-radius:7px;border:1px solid var(--line);background:#fff;cursor:pointer;font-family:inherit}
+  .row-act button:hover{border-color:#c9d2e0;background:#fafbfc}
+  .row-act .del:hover{color:var(--bad);border-color:#f0cfcc;background:var(--bad-soft)}
+  .empty{text-align:center;padding:28px;color:var(--ink-3);font-size:13px}
+  .model{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  select{padding:7px 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:13px;background:#fff;min-width:220px}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:20px;
+    background:var(--ok-soft);color:var(--ok);border:1px solid #cfe7d9}
+  .pill.warn{background:var(--warn-soft);color:var(--warn);border-color:#f2e2c0}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  code{background:#f2f4f7;padding:1px 5px;border-radius:4px;font-size:12px}
+  .modal{position:fixed;inset:0;background:rgba(12,18,28,.45);display:none;place-items:center;z-index:50;padding:24px}
+  .modal.on{display:grid}
+  .sheet{background:#fff;border-radius:14px;width:min(820px,100%);max-height:82vh;display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:0 24px 70px rgba(16,24,40,.28)}
+  .sheet header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .sheet header b{flex:1;font-size:14px}
+  .sheet .body{overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px;background:#fbfcfe}
+  .chunk{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:#fff;font-size:12.5px}
+  .chunk .h{font-size:11px;color:var(--ink-3);margin-bottom:5px;display:flex;justify-content:space-between;gap:8px}
+  .chunk pre{margin:0;white-space:pre-wrap;word-break:break-word;font:inherit}
+  .thumbs{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .thumbs img{width:96px;height:64px;object-fit:cover;border-radius:7px;border:1px solid var(--line);cursor:zoom-in;background:#f2f4f7}
+  .foot{color:var(--ink-3);font-size:11.5px;text-align:center;padding:4px 0 26px}
+  @media (max-width:760px){ .stats{grid-template-columns:1fr 1fr} .top .in{padding:12px 14px} main{padding:14px} }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="in">
+    <div class="logo">知</div>
+    <h1>知识库后台<small>文档维护 · 索引状态 · 模型配置</small></h1>
+    <span class="pill" id="svcPill"><span class="dot"></span><span id="svcText">连接中…</span></span>
+    <a class="btn" href="demo.html" target="_blank">悬浮窗演示</a>
+    <a class="btn" href="index.html">对话台</a>
+  </div>
+</div>
+
+<main>
+  <div class="stats">
+    <div class="stat"><div class="k">文档</div><div class="v" id="sDocs">–</div></div>
+    <div class="stat"><div class="k">分块</div><div class="v" id="sChunks">–</div></div>
+    <div class="stat"><div class="k">图片</div><div class="v" id="sImgs">–</div></div>
+    <div class="stat"><div class="k">当前模型</div><div class="v" id="sModel" style="font-size:14px;line-height:1.4">–</div></div>
+  </div>
+
+  <div class="card">
+    <h2>上传文档</h2>
+    <p class="desc">支持 <code>.pdf</code> <code>.md</code> <code>.txt</code>、以及包含文档和截图的 <code>.zip</code>。同名文件会上传即替换整篇。
+      PDF 会按页抽出文字、并把页面里的图和图表截成图片挂到对应段落上，不需要另外配图。</p>
+    <div class="drop" id="drop">
+      <b>点击选择文件，或把文件拖到这里</b>
+      <span>pdf / md / txt / zip / png / jpg / svg，单文件上限 30MB</span>
+    </div>
+    <input type="file" id="file" multiple accept=".pdf,.md,.markdown,.txt,.zip,.png,.jpg,.jpeg,.gif,.webp,.svg" hidden>
+    <div class="result" id="upResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>文档列表 <span class="tag" id="docCount">0</span></h2>
+    <p class="desc">删除是物理删除：分块、登记信息、图片文件一起清掉。</p>
+    <div id="docBox"><div class="empty">加载中…</div></div>
+  </div>
+
+  <div class="card">
+    <h2>模型</h2>
+    <p class="desc">本地开源模型，资料不出内网。切换立即生效，不用重启服务。</p>
+    <div class="model">
+      <select id="modelSel"></select>
+      <button class="btn primary" id="btnModel">应用</button>
+      <span id="modelMsg" style="font-size:12.5px;color:var(--ink-3)"></span>
+    </div>
+    <p class="desc" style="margin:12px 0 0">没有想要的模型？在服务器上执行 <code>ollama pull qwen2.5:7b-instruct</code>，然后刷新本页。</p>
+  </div>
+
+  <div class="card">
+    <h2 style="color:var(--bad)">危险操作</h2>
+    <p class="desc">清空全部文档与索引，并重新载入内置样例。不可撤销。</p>
+    <button class="btn danger" id="btnReset">清空知识库并重建</button>
+  </div>
+
+  <div class="foot">RAG 内部知识助手 · 封闭域模式：回答只取自本文档库</div>
+</main>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <header><b id="mTitle">分块预览</b><button class="btn" id="mClose">关闭</button></header>
+    <div class="body" id="mBody"></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = ts => ts ? new Date(ts*1000).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '–';
+
+async function api(path, opts={}){
+  const r = await fetch(KB_URL(path), {headers:{'Content-Type':'application/json'}, ...opts});
+  const text = await r.text();
+  if (!r.ok) throw new Error(text.slice(0,200) || ('HTTP '+r.status));
+  return text ? JSON.parse(text) : {};
+}
+
+let DOCS = [];
+
+function renderDocs(docs){
+  DOCS = docs || [];
+  $('#docCount').textContent = DOCS.length;
+  $('#sDocs').textContent = DOCS.length;
+  $('#sChunks').textContent = DOCS.reduce((a,d)=>a+(d.chunks||0),0);
+  $('#sImgs').textContent = DOCS.reduce((a,d)=>a+(d.images||0),0);
+  if (!DOCS.length){
+    $('#docBox').innerHTML = '<div class="empty">还没有文档。上面拖一个 md 或 zip 进来就能用了。</div>';
+    return;
+  }
+  $('#docBox').innerHTML = `<table>
+    <thead><tr><th style="width:44%">标题</th><th>分块</th><th>图片</th><th>更新时间</th><th style="text-align:right">操作</th></tr></thead>
+    <tbody>${DOCS.map(d=>`<tr>
+      <td class="t">${esc(d.title)}<small>${esc(d.doc_id)}</small></td>
+      <td>${d.chunks}</td>
+      <td>${d.images ? `<span class="tag img">${d.images}</span>` : '–'}</td>
+      <td style="color:var(--ink-3);font-size:12px">${fmt(d.updated_at)}</td>
+      <td><div class="row-act">
+        <button data-view="${esc(d.doc_id)}">查看分块</button>
+        <button class="del" data-del="${esc(d.doc_id)}">删除</button>
+      </div></td>
+    </tr>`).join('')}</tbody></table>`;
+
+  $('#docBox').querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>viewDoc(b.dataset.view));
+  $('#docBox').querySelectorAll('[data-del]').forEach(b=>b.onclick=async ()=>{
+    const d = DOCS.find(x=>x.doc_id===b.dataset.del);
+    if (!confirm(`删除《${d?d.title:b.dataset.del}》？分块和图片会一起删除。`)) return;
+    b.disabled = true; b.textContent = '删除中';
+    try{
+      const res = await api(`/kb/docs/${encodeURIComponent(b.dataset.del)}/delete`, {method:'POST'});
+      renderDocs(res.docs);
+    }catch(e){ alert('删除失败：'+e.message); b.disabled=false; b.textContent='删除'; }
+  });
+}
+
+async function viewDoc(id){
+  $('#mTitle').textContent = '分块预览 · ' + id;
+  $('#mBody').innerHTML = '<div class="empty">加载中…</div>';
+  $('#modal').classList.add('on');
+  try{
+    const d = await api('/kb/docs/' + encodeURIComponent(id));
+    $('#mTitle').textContent = `${d.meta.title || id} · ${d.chunks.length} 块`;
+    $('#mBody').innerHTML = d.chunks.map((c,i)=>`
+      <div class="chunk">
+        <div class="h"><span>#${i+1} ${esc(c.section||'正文')}</span><span>${(c.text||'').length} 字</span></div>
+        <pre>${esc(c.text)}</pre>
+        ${(c.images||[]).length ? `<div class="thumbs">${c.images.map(im=>`<img src="${esc(im.src)}" alt="${esc(im.alt)}" onclick="window.open(this.src)">`).join('')}</div>` : ''}
+      </div>`).join('') || '<div class="empty">没有分块</div>';
+  }catch(e){
+    $('#mBody').innerHTML = `<div class="line bad">加载失败：${esc(e.message)}</div>`;
+  }
+}
+
+$('#mClose').onclick = ()=> $('#modal').classList.remove('on');
+$('#modal').onclick = e=>{ if (e.target.id==='modal') $('#modal').classList.remove('on'); };
+
+/* ---------- 上传 ---------- */
+const drop = $('#drop'), fileInput = $('#file');
+drop.onclick = ()=> fileInput.click();
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev, e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev, e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop', e=>{ if (e.dataTransfer.files.length) upload(e.dataTransfer.files); });
+fileInput.onchange = ()=>{ if (fileInput.files.length) upload(fileInput.files); };
+
+async function upload(files){
+  const fd = new FormData();
+  [...files].forEach(f=>fd.append('files', f));
+  const box = $('#upResult');
+  box.innerHTML = `<div class="line">上传中… ${[...files].map(f=>esc(f.name)).join('、')}</div>`;
+  drop.style.pointerEvents = 'none';
+  try{
+    const r = await fetch(KB_URL('/upload'), {method:'POST', body:fd});
+    const t = await r.text();
+    if (!r.ok) throw new Error(t.slice(0,300));
+    const d = JSON.parse(t);
+    const lines = [];
+    (d.results||[]).forEach(x=>lines.push(`<div class="line ok">✓ ${esc(x.name)} · ${x.chunks} 块 · ${x.images} 张图</div>`));
+    (d.warnings||[]).forEach(w=>lines.push(`<div class="line warn">⚠ ${esc(w)}</div>`));
+    (d.errors||[]).forEach(e=>lines.push(`<div class="line bad">✕ ${esc(e.name)}：${esc(e.error)}</div>`));
+    box.innerHTML = lines.join('') || '<div class="line">没有处理任何文件</div>';
+    renderDocs(d.docs);
+  }catch(e){
+    box.innerHTML = `<div class="line bad">上传失败：${esc(e.message)}</div>`;
+  }finally{
+    drop.style.pointerEvents = '';
+    fileInput.value = '';
+    loadModels();
+  }
+}
+
+/* ---------- 模型 ---------- */
+async function loadModels(){
+  try{
+    const d = await api('/api/models');
+    const sel = $('#modelSel');
+    const list = d.installed || [];
+    sel.innerHTML = list.length
+      ? list.map(m=>`<option ${m===d.current?'selected':''}>${esc(m)}</option>`).join('')
+      : `<option>${esc(d.current||'未检测到本地模型')}</option>`;
+    $('#sModel').innerHTML = d.current ? esc(d.current) + `<small>${esc(d.provider||'')}</small>` : '–';
+    $('#svcText').textContent = list.length ? '服务正常' : '模型未就绪';
+    $('#svcPill').className = 'pill' + (list.length ? '' : ' warn');
+  }catch(e){
+    $('#svcText').textContent = '服务异常';
+    $('#svcPill').className = 'pill warn';
+  }
+}
+
+$('#btnModel').onclick = async ()=>{
+  const m = $('#modelSel').value;
+  $('#modelMsg').textContent = '切换中…';
+  try{
+    await api('/api/model', {method:'POST', body: JSON.stringify({model:m})});
+    $('#modelMsg').textContent = '已切换到 ' + m;
+    loadModels();
+  }catch(e){ $('#modelMsg').textContent = '切换失败：' + e.message; }
+};
+
+$('#btnReset').onclick = async ()=>{
+  if (!confirm('确定清空全部文档和索引？此操作不可撤销。')) return;
+  const btn = $('#btnReset'); btn.disabled = true; btn.textContent = '重建中…';
+  try{
+    const r = await api('/reset', {method:'POST'});
+    renderDocs(r.docs);
+    $('#upResult').innerHTML = `<div class="line ok">已重建，当前 ${r.chunks} 个分块</div>`;
+  }catch(e){ alert('重建失败：'+e.message); }
+  finally{ btn.disabled = false; btn.textContent = '清空知识库并重建'; }
+};
+
+/* ---------- 启动 ---------- */
+(async ()=>{
+  try{
+    const h = await api('/health');
+    $('#svcText').textContent = '服务正常';
+    $('#sModel').innerHTML = esc(h.mode||'–') + `<small>${esc(h.provider||'')}</small>`;
+    const d = await api('/kb/docs');
+    renderDocs(d.docs);
+    loadModels();
+  }catch(e){
+    $('#svcText').textContent = '服务异常';
+    $('#svcPill').className = 'pill warn';
+    $('#docBox').innerHTML = `<div class="line bad">无法连接服务：${esc(e.message)}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

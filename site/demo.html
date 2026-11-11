@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>客户管理 · 演示（悬浮窗接入）</title>
+<style>
+  :root{--brand:#2f6fed;--ink:#141a23;--ink-2:#5a6472;--ink-3:#8b95a3;--line:#e6e9ee;--bg:#f5f7fa}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .app{display:flex;min-height:100vh}
+  aside{width:212px;background:#101828;color:#c7d0dd;padding:16px 12px;flex:0 0 auto}
+  .brand{display:flex;align-items:center;gap:9px;padding:4px 8px 18px;font-weight:650;color:#fff;font-size:14.5px}
+  .brand i{width:28px;height:28px;border-radius:8px;background:var(--brand);display:grid;place-items:center;font-style:normal;font-size:13px}
+  aside nav a{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;color:#aab6c6;
+    text-decoration:none;font-size:13.5px;margin-bottom:2px}
+  aside nav a.on{background:#1d2939;color:#fff}
+  aside nav a:hover{background:#182230;color:#fff}
+  .wrap{flex:1;min-width:0;display:flex;flex-direction:column}
+  header.top{background:#fff;border-bottom:1px solid var(--line);padding:0 26px;height:56px;display:flex;align-items:center;gap:14px}
+  header.top h1{font-size:15px;margin:0;font-weight:600;flex:1}
+  .who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}
+  .avatar{width:28px;height:28px;border-radius:50%;background:#e8eefb;color:var(--brand);display:grid;place-items:center;font-size:12px;font-weight:600}
+  main{padding:22px 26px;max-width:1180px}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .c .k{font-size:12.5px;color:var(--ink-3)}
+  .c .v{font-size:23px;font-weight:650;letter-spacing:-.02em}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .panel .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .panel .hd b{font-size:13.5px;flex:1}
+  .search{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;width:200px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:12px;color:var(--ink-3);font-weight:600;padding:9px 16px;background:#fafbfc;border-bottom:1px solid var(--line)}
+  td{padding:11px 16px;border-bottom:1px solid #f2f4f7}
+  tr:last-child td{border-bottom:0}
+  .tag{font-size:11.5px;padding:1px 8px;border-radius:20px;background:#eef3ff;color:var(--brand)}
+  .tag.g{background:#e9f7f1;color:#12805c}
+  .tag.y{background:#fff8e8;color:#a55b00}
+  .note{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .note h3{margin:0 0 8px;font-size:13.5px}
+  .note p{margin:0 0 10px;color:var(--ink-2);font-size:13px}
+  pre{background:#0f172a;color:#d7e2f3;padding:14px 16px;border-radius:10px;overflow:auto;font-size:12.5px;line-height:1.7;margin:0}
+  pre .c{color:#7d8ea8}
+  pre .s{color:#9fe6b8}
+  @media (max-width:900px){ aside{display:none} .cards{grid-template-columns:1fr 1fr} main{padding:16px} }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand"><i>销</i>销售云 CRM</div>
+    <nav>
+      <a href="#" class="on">客户管理</a>
+      <a href="#">商机跟进</a>
+      <a href="#">合同订单</a>
+      <a href="#">回款计划</a>
+      <a href="#">数据看板</a>
+    </nav>
+  </aside>
+  <div class="wrap">
+    <header class="top">
+      <h1>客户管理</h1>
+      <input class="search" placeholder="搜索客户名称">
+      <div class="who"><div class="avatar">王</div>王小明</div>
+    </header>
+    <main>
+      <div class="cards">
+        <div class="c"><div class="k">本月新增客户</div><div class="v">42</div></div>
+        <div class="c"><div class="k">待跟进商机</div><div class="v">17</div></div>
+        <div class="c"><div class="k">本月签约额</div><div class="v">¥ 86.4 万</div></div>
+        <div class="c"><div class="k">逾期回款</div><div class="v" style="color:#b3261e">3</div></div>
+      </div>
+      <div class="panel">
+        <div class="hd"><b>客户列表</b><span style="font-size:12px;color:var(--ink-3)">共 128 条</span></div>
+        <table>
+          <thead><tr><th>客户名称</th><th>负责人</th><th>阶段</th><th>最近联系</th><th style="text-align:right">合同金额</th></tr></thead>
+          <tbody>
+            <tr><td>星野智能科技</td><td>王小明</td><td><span class="tag g">已签约</span></td><td>2026-11-03</td><td style="text-align:right">¥ 328,000</td></tr>
+            <tr><td>云图数据服务</td><td>李静</td><td><span class="tag">方案评审</span></td><td>2026-11-02</td><td style="text-align:right">¥ 156,000</td></tr>
+            <tr><td>恒美医疗器械</td><td>王小明</td><td><span class="tag y">报价中</span></td><td>2026-10-30</td><td style="text-align:right">—</td></tr>
+            <tr><td>瑞达物流集团</td><td>陈磊</td><td><span class="tag g">已签约</span></td><td>2026-10-28</td><td style="text-align:right">¥ 512,000</td></tr>
+            <tr><td>青禾教育科技</td><td>李静</td><td><span class="tag">初次接触</span></td><td>2026-10-27</td><td style="text-align:right">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <h3>这是接入演示</h3>
+        <p>右下角的气泡就是知识助手悬浮窗。它由一行 <code>&lt;script&gt;</code> 注入，不占页面布局、不影响宿主样式，
+          用 Shadow DOM 包裹，OA 里那种全局 <code>*{}</code> 重置也不会把它搞歪。</p>
+        <p>任何业务系统贴同一段代码即可，改 <code>data-source</code> 就能按系统区分用量和 bad case。</p>
+<pre>&lt;script src=<span class="s">"http://127.0.0.1:8090/widget.js"</span>
+        data-title=<span class="s">"销售知识助手"</span>
+        data-color=<span class="s">"#2f6fed"</span>
+        data-source=<span class="s">"crm"</span>&gt;&lt;/script&gt;
+
+<span class="c">// 业务代码里也可以主动拉起并带问题：</span>
+KBWidget.ask(<span class="s">"标准版的计费规则是什么？"</span>);</pre>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="widget.js" data-title="销售知识助手" data-color="#2f6fed" data-source="crm-demo"></script>
+</body>
+</html>

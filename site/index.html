@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 知识库问答 · 试用</title>
+<style>
+  :root{
+    --ink:#12151c; --ink2:#3d4655; --ink3:#6b7686; --line:#e4e8ee;
+    --bg:#f5f7f9; --panel:#ffffff; --accent:#1f6f6b; --accent-2:#2a8b85;
+    --accent-soft:#e8f3f2; --warn:#9a5b00; --warn-soft:#fdf3e3;
+    --bad:#b3352b; --bad-soft:#fbecea; --ok:#1c6b3f; --ok-soft:#e9f5ee;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font:14.5px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit}
+  .app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+  /* ---------- header ---------- */
+  header{
+    flex:0 0 auto;display:flex;align-items:center;gap:12px;
+    padding:0 18px;height:56px;background:var(--panel);
+    border-bottom:1px solid var(--line);
+  }
+  .logo{
+    width:26px;height:26px;border-radius:7px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--accent),#3fa39c);
+    display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;
+  }
+  .title{font-weight:600;font-size:14.5px;letter-spacing:.01em}
+  .title small{color:var(--ink3);font-weight:400;margin-left:8px;font-size:12.5px}
+  .spacer{flex:1}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;
+    padding:3px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent);
+    border:1px solid #cfe6e4;white-space:nowrap;
+  }
+  .pill.warn{background:var(--warn-soft);color:var(--warn);border-color:#f2e0c4}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.75}
+  .iconbtn{
+    display:none;border:1px solid var(--line);background:#fff;color:var(--ink2);
+    border-radius:8px;padding:5px 10px;font-size:12.5px;cursor:pointer;
+  }
+
+  /* ---------- layout ---------- */
+  .body{flex:1;display:flex;min-height:0}
+  aside{
+    flex:0 0 328px;border-right:1px solid var(--line);background:var(--panel);
+    display:flex;flex-direction:column;min-height:0;
+  }
+  .side-scroll{flex:1;overflow-y:auto;padding:16px}
+  .side-block{margin-bottom:22px}
+  .side-h{
+    display:flex;align-items:center;justify-content:space-between;
+    font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);
+    font-weight:600;margin-bottom:10px;
+  }
+  .linkbtn{
+    background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;
+    padding:2px 4px;border-radius:4px;letter-spacing:0;text-transform:none;
+  }
+  .linkbtn:hover{background:var(--accent-soft)}
+  .linkbtn.danger{color:var(--bad)}
+  .linkbtn.danger:hover{background:var(--bad-soft)}
+
+  /* dropzone */
+  .drop{
+    border:1.5px dashed #c8d2dd;border-radius:var(--radius);padding:22px 14px;
+    text-align:center;cursor:pointer;transition:.15s;background:#fbfcfd;
+  }
+  .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+  .drop .big{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:4px}
+  .drop .hint{font-size:12px;color:var(--ink3);line-height:1.6}
+  .drop .ext{font-size:11.5px;color:var(--accent);margin-top:8px;letter-spacing:.02em}
+
+  /* doc list */
+  .doclist{display:flex;flex-direction:column;gap:6px}
+  .doc{
+    display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;
+    border:1px solid var(--line);background:#fff;font-size:13px;
+  }
+  .doc:hover{border-color:#cfdae6}
+  .doc .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .doc .n{font-size:11.5px;color:var(--ink3);font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .doc .x{
+    border:none;background:none;color:var(--ink3);cursor:pointer;font-size:14px;
+    padding:0 2px;line-height:1;border-radius:4px;flex:0 0 auto;
+  }
+  .doc .x:hover{color:var(--bad)}
+  .empty-hint{font-size:12.5px;color:var(--ink3);padding:10px 2px}
+  .side-foot{
+    flex:0 0 auto;border-top:1px solid var(--line);padding:10px 16px;
+    font-size:11.5px;color:var(--ink3);display:flex;justify-content:space-between;gap:8px;
+  }
+  .side-foot b{color:var(--ink2);font-variant-numeric:tabular-nums}
+
+  /* ---------- chat ---------- */
+  main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+  .msgs{flex:1;overflow-y:auto;padding:24px 0 8px}
+  .inner{max-width:760px;margin:0 auto;padding:0 20px}
+
+  .welcome{padding:26px 0 10px;text-align:center}
+  .welcome .ic{
+    width:44px;height:44px;margin:0 auto 14px;border-radius:12px;
+    background:var(--accent-soft);display:grid;place-items:center;font-size:20px;
+  }
+  .welcome h2{margin:0 0 6px;font-size:17px;font-weight:600}
+  .welcome p{margin:0;color:var(--ink3);font-size:13.5px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:20px}
+  .chip{
+    border:1px solid var(--line);background:#fff;color:var(--ink2);border-radius:99px;
+    padding:6px 13px;font-size:12.5px;cursor:pointer;transition:.15s;
+  }
+  .chip:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+  .turn{display:flex;gap:10px;margin-bottom:22px}
+  .turn.user{flex-direction:row-reverse}
+  .avatar{
+    flex:0 0 28px;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+    font-size:11.5px;font-weight:700;margin-top:2px;
+  }
+  .turn.user .avatar{background:#e9edf3;color:var(--ink2)}
+  .turn.bot .avatar{background:linear-gradient(135deg,var(--accent),#3fa39c);color:#fff}
+  .bubble{
+    max-width:min(100%,620px);border-radius:12px;padding:11px 15px;font-size:14px;
+    line-height:1.75;word-break:break-word;white-space:pre-wrap;
+  }
+  .turn.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+  .turn.bot .bubble{
+    background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px;
+    box-shadow:0 1px 2px rgba(18,21,28,.03);
+  }
+  .bubble.streaming{white-space:pre-wrap}
+  .bubble .cite-ref{
+    display:inline-block;font-size:10.5px;line-height:1;padding:2px 4px;border-radius:3px;
+    background:var(--accent-soft);color:var(--accent);font-weight:600;vertical-align:super;
+    margin:0 1px;cursor:pointer;text-decoration:none;
+  }
+
+  /* 答案附图：来自被引用的 chunk，不是整篇文档的图 */
+  .figs{margin-top:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;max-width:min(100%,620px)}
+  .figs figure{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .figs img{display:block;width:100%;height:auto;max-height:230px;object-fit:contain;
+    background:#fbfcfd;cursor:zoom-in}
+  .figs figcaption{font-size:11px;color:var(--ink3);padding:5px 8px;border-top:1px solid var(--line);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #lb{position:fixed;inset:0;z-index:99;background:rgba(12,15,20,.82);display:none;
+    align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+  #lb.on{display:flex}
+  #lb img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+
+  .cites{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .cite{
+    text-align:left;border:1px solid var(--line);background:#fbfcfd;border-radius:8px;
+    padding:7px 10px;font-size:12.5px;color:var(--ink2);cursor:pointer;transition:.15s;
+    display:flex;gap:8px;align-items:baseline;
+  }
+  .cite:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .cite .num{
+    flex:0 0 auto;font-size:10.5px;font-weight:700;color:var(--accent);
+    background:#fff;border:1px solid #cfe6e4;border-radius:3px;padding:1px 4px;
+  }
+  .cite .src{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cite .snip{
+    margin:6px 2px 0;padding:10px 12px;background:#fff;border:1px solid var(--line);
+    border-left:2px solid var(--accent);border-radius:6px;font-size:12.5px;color:var(--ink2);
+    white-space:pre-wrap;line-height:1.7;display:none;
+  }
+  .cite .snip.open{display:block}
+
+  .meta{
+    margin-top:9px;font-size:11.5px;color:var(--ink3);display:flex;flex-wrap:wrap;
+    gap:10px;align-items:center;
+  }
+  .meta .flag{color:var(--warn)}
+  .meta .flag.bad{color:var(--bad)}
+  details.dbg{margin-top:6px;font-size:11.5px;color:var(--ink3)}
+  details.dbg summary{cursor:pointer;color:var(--accent);list-style:none;outline:none}
+  details.dbg summary::-webkit-details-marker{display:none}
+  details.dbg summary::before{content:"▸ ";font-size:10px}
+  details.dbg[open] summary::before{content:"▾ "}
+  details.dbg table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px}
+  details.dbg th,details.dbg td{
+    text-align:left;padding:4px 7px;border-bottom:1px solid var(--line);
+    font-variant-numeric:tabular-nums;
+  }
+  details.dbg th{color:var(--ink3);font-weight:600;background:#fafbfc}
+
+  .abstain{
+    display:flex;gap:9px;align-items:flex-start;
+    background:var(--warn-soft);border:1px solid #f2e0c4;border-radius:8px;
+    padding:9px 12px;font-size:13px;color:#6b4200;
+  }
+
+  /* composer */
+  .composer{flex:0 0 auto;padding:10px 20px 18px;background:var(--bg)}
+  .cbox{
+    max-width:760px;margin:0 auto;background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:8px 8px 8px 14px;display:flex;gap:8px;align-items:flex-end;
+    box-shadow:0 2px 10px rgba(18,21,28,.04);transition:.15s;
+  }
+  .cbox:focus-within{border-color:var(--accent);box-shadow:0 2px 14px rgba(31,111,107,.12)}
+  textarea{
+    flex:1;border:none;outline:none;resize:none;font-family:inherit;font-size:14px;
+    line-height:1.6;max-height:140px;padding:6px 0;background:transparent;color:var(--ink);
+  }
+  textarea::placeholder{color:#a3adba}
+  .send{
+    flex:0 0 auto;width:34px;height:34px;border-radius:9px;border:none;cursor:pointer;
+    background:var(--accent);color:#fff;display:grid;place-items:center;transition:.15s;
+  }
+  .send:hover:not(:disabled){background:var(--accent-2)}
+  .send:disabled{background:#c8d2dd;cursor:not-allowed}
+  .send svg{width:16px;height:16px}
+  .hint{max-width:760px;margin:8px auto 0;font-size:11.5px;color:var(--ink3);text-align:center}
+
+  .typing{display:inline-flex;gap:3px;align-items:center;padding:2px 0}
+  .typing i{
+    width:5px;height:5px;border-radius:50%;background:var(--ink3);opacity:.4;
+    animation:bl 1.1s infinite;
+  }
+  .typing i:nth-child(2){animation-delay:.18s}
+  .typing i:nth-child(3){animation-delay:.36s}
+  @keyframes bl{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:.9;transform:translateY(-2px)}}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);
+    background:#1b222c;color:#fff;font-size:13px;padding:9px 16px;border-radius:9px;
+    opacity:0;pointer-events:none;transition:.22s;max-width:80vw;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media(max-width:900px){
+    .iconbtn{display:inline-block}
+    aside{
+      position:fixed;top:56px;bottom:0;left:0;width:300px;z-index:40;
+      transform:translateX(-102%);transition:.22s;box-shadow:6px 0 24px rgba(18,21,28,.12);
+    }
+    aside.open{transform:translateX(0)}
+    .title small{display:none}
+    .inner{padding:0 14px}
+    .composer{padding:8px 12px 14px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo">R</div>
+    <div class="title">知识库问答<small>检索增强 · 带引用 · 可拒答</small></div>
+    <div class="spacer"></div>
+    <div class="pill" style="background:var(--ok-soft);color:var(--ok);border-color:#cfe7d9">封闭域 · 仅依据文档</div>
+    <div class="pill" id="statusPill"><span class="dot"></span><span id="statusText">连接中…</span></div>
+    <button class="iconbtn" id="sideToggle">知识库</button>
+  </header>
+
+  <div class="body">
+    <aside id="aside">
+      <div class="side-scroll">
+        <div class="side-block">
+          <div class="side-h">上传文档</div>
+          <div class="drop" id="drop">
+            <div class="big">点击或拖拽文件到这里</div>
+            <div class="hint">支持 .pdf / .md / .txt，以及含截图的 .zip<br>PDF 里的图文会自动拆开，截图随答案一起返回</div>
+            <div class="ext">建议单个文件 &lt; 30 MB</div>
+          </div>
+          <input type="file" id="file" multiple accept=".pdf,.md,.markdown,.txt,.zip,.png,.jpg,.jpeg,.gif,.webp,.svg" hidden>
+        </div>
+
+        <div class="side-block">
+          <div class="side-h">
+            <span>知识库 <span id="docCount" style="color:var(--ink2)">0</span></span>
+            <button class="linkbtn danger" id="reset">清空</button>
+          </div>
+          <div class="doclist" id="doclist">
+            <div class="empty-hint">暂无文档</div>
+          </div>
+        </div>
+
+        <div class="side-block">
+          <div class="side-h">当前配置</div>
+          <div class="empty-hint" id="cfg" style="line-height:1.9">—</div>
+        </div>
+      </div>
+      <div class="side-foot">
+        <span>切块 <b id="chunkCount">0</b></span>
+        <span>嵌入 <b id="embedName">—</b></span>
+      </div>
+    </aside>
+
+    <main>
+      <div class="msgs" id="msgs">
+        <div class="inner" id="stream">
+          <div class="welcome" id="welcome">
+            <div class="ic">💬</div>
+            <h2>上传 md 文件，然后直接问</h2>
+            <p>回答只依据你上传的文档，不使用任何外部知识；每句带引用，文档里没有就说「无法确定」。</p>
+            <div class="chips" id="sampleChips">
+              <button class="chip">密码重置链接有效期是多久？</button>
+              <button class="chip">标准版一个人一个月多少钱？</button>
+              <button class="chip">API 超出额度怎么收费？</button>
+              <button class="chip">数据存在哪个可用区？</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="cbox">
+          <textarea id="q" rows="1" placeholder="问点什么…（Enter 发送，Shift+Enter 换行）"></textarea>
+          <button class="send" id="send" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h13M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+        <div class="hint">封闭域模式：答案仅来自你的文档，含文档外信息会被自动拦截并降级为原文</div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const stream = $('#stream'), msgs = $('#msgs'), qEl = $('#q'), sendBtn = $('#send');
+  let busy = false;
+
+  function toast(msg){
+    const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 2600);
+  }
+  async function api(path, opts){
+    const r = await fetch(KB_URL(path), opts);
+    if(!r.ok){
+      let d = ''; try{ d = (await r.json()).detail || '' }catch(e){}
+      throw new Error(d || ('HTTP ' + r.status));
+    }
+    return r.json();
+  }
+
+  /* ---------- 状态 ---------- */
+  async function refresh(){
+    try{
+      const h = await api('/health');
+      const offline = h.provider === 'extractive';
+      const local = h.provider === 'ollama';
+      $('#statusPill').className = 'pill' + (offline ? ' warn' : '');
+      $('#statusText').textContent = offline ? '离线抽取模式' : (local ? '本地模型 · ' + h.mode : h.mode);
+      $('#chunkCount').textContent = h.chunks;
+      $('#embedName').textContent = h.embedder;
+      $('#docCount').textContent = h.docs;
+      const faith = '<b style="color:var(--ok)">封闭域：开启</b><br>只使用检索到的文档作答；答案中出现文档外的数字/标识符会被拦截并降级为原文。<br><br>';
+      const modelLine = offline
+        ? '<b style="color:var(--warn)">离线抽取模式</b><br>没有可用的语言模型，答案从文档片段直接摘出。<br>在后台页面选择一个本地模型即可切换。'
+        : `<b style="color:var(--ok)">${local ? '本地模型（资料不出内网）' : '云端模型'}</b><br>${esc(h.mode)}`;
+      $('#cfg').innerHTML = faith + modelLine + `<br><br>嵌入：${esc(h.embedder)}<br>切块数：${h.chunks}<br><a href="admin.html" target="_blank">文档后台 →</a>`;
+      const d = await api('/kb/docs');
+      renderDocs(d.docs);
+    }catch(e){
+      $('#statusPill').className = 'pill warn';
+      $('#statusText').textContent = '服务未连接';
+      $('#cfg').innerHTML = '<b style="color:var(--bad)">未连接到后端</b><br>请确认 uvicorn 已启动。';
+    }
+  }
+
+  function renderDocs(docs){
+    const box = $('#doclist');
+    if(!docs.length){ box.innerHTML = '<div class="empty-hint">暂无文档</div>'; return; }
+    box.innerHTML = docs.map(d => `
+      <div class="doc">
+        <span class="name" title="${esc(d.doc_id)}">${esc(d.title || d.doc_id)}</span>
+        ${d.images ? `<span class="n" title="图片数" style="background:#eef3ff;color:#2f6fed">${d.images}图</span>` : ''}
+        <span class="n">${d.chunks}</span>
+        <button class="x" data-id="${esc(d.doc_id)}" title="移除">×</button>
+      </div>`).join('');
+    box.querySelectorAll('.x').forEach(b => b.onclick = async () => {
+      try{
+        const r = await api('/kb/docs/' + encodeURIComponent(b.dataset.id) + '/delete', {method:'POST'});
+        renderDocs(r.docs); $('#chunkCount').textContent = r.chunks;
+        $('#docCount').textContent = r.docs.length;
+        toast('已移除');
+      }catch(e){ toast('移除失败：' + e.message) }
+    });
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+      {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+    ));
+  }
+
+  /* ---------- 上传 ---------- */
+  const drop = $('#drop'), fileInput = $('#file');
+  drop.onclick = () => fileInput.click();
+  fileInput.onchange = () => { if(fileInput.files.length) upload(fileInput.files); fileInput.value=''; };
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.classList.add('over');
+  }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.classList.remove('over');
+  }));
+  drop.addEventListener('drop', e => { if(e.dataTransfer.files.length) upload(e.dataTransfer.files); });
+
+  async function upload(files){
+    const fd = new FormData();
+    for(const f of files) fd.append('files', f);
+    drop.querySelector('.big').textContent = '上传中…';
+    try{
+      const r = await api('/upload', {method:'POST', body: fd});
+      renderDocs(r.docs);
+      $('#chunkCount').textContent = r.total_chunks;
+      $('#docCount').textContent = r.docs.length;
+      const ok = r.results.map(x => `${x.name}（${x.chunks} 块）`).join('、');
+      if(r.errors.length) toast('部分失败：' + r.errors.map(e => e.name + ' ' + e.error).join('；'));
+      else toast('已入库：' + ok);
+      $('#welcome') && $('#welcome').remove();
+    }catch(e){
+      toast('上传失败：' + e.message);
+    }finally{
+      drop.querySelector('.big').textContent = '点击或拖拽文件到这里';
+    }
+  }
+
+  $('#reset').onclick = async () => {
+    if(!confirm('清空知识库？内置样例文档会被重新载入，上传的文件会删除。')) return;
+    try{
+      const r = await api('/reset', {method:'POST'});
+      renderDocs(r.docs); $('#chunkCount').textContent = r.chunks;
+      $('#docCount').textContent = r.docs.length;
+      toast('已重置');
+    }catch(e){ toast('重置失败：' + e.message) }
+  };
+
+  $('#sideToggle').onclick = () => $('#aside').classList.toggle('open');
+
+  /* ---------- 对话 ---------- */
+  function addTurn(role, html){
+    const t = document.createElement('div');
+    t.className = 'turn ' + role;
+    t.innerHTML = `<div class="avatar">${role==='user' ? '我' : 'AI'}</div>
+                   <div style="min-width:0;max-width:100%">${html}</div>`;
+    stream.appendChild(t);
+    msgs.scrollTop = msgs.scrollHeight;
+    return t;
+  }
+
+  function answerHTML(d){
+    const cites = (d.citations || []).map((c, i) => `
+      <div>
+        <button class="cite" data-k="${i}">
+          <span class="num">${c.n}</span>
+          <span class="src">《${esc(c.title || c.doc_id)}》${c.section ? ' · ' + esc(c.section) : ''}</span>
+        </button>
+        <div class="snip" id="snip-${i}">${esc(c.snippet || '')}</div>
+      </div>`).join('');
+
+    let body = esc(d.answer || '').replace(/\[(\d+)\]/g, (m, n) =>
+      `<a class="cite-ref" data-ref="${n}">${n}</a>`);
+
+    if(d.abstained){
+      body = `<div class="abstain"><span>⚠️</span><span>${body}</span></div>`;
+    }
+
+    // 截图跟着答案走：只带被引用片段里的图，点开可放大看细节
+    const figs = (d.images && d.images.length) ? `<div class="figs">${d.images.map(im => `
+      <figure>
+        <img loading="lazy" src="${esc(im.src)}" alt="${esc(im.alt || '截图')}" data-full="${esc(im.src)}">
+        <figcaption>${esc(im.alt || '截图')}${im.section ? ' · ' + esc(im.section) : ''}</figcaption>
+      </figure>`).join('')}</div>` : '';
+
+    const FLAG_TEXT = {
+      grounding_violation: '已拦截资料外信息',
+      fallback_quote: '已降级为原文',
+      no_citation: '无有效引用',
+      invalid_citation: '引用编号异常',
+      low_confidence: '置信度偏低'
+    };
+    const flags = (d.flags || []).filter(f => f !== 'abstain' && FLAG_TEXT[f]);
+    const hard = flags.includes('grounding_violation') || flags.includes('no_citation') || flags.includes('invalid_citation');
+    const flagTxt = flags.length
+      ? ` · <span class="flag ${hard ? 'bad' : ''}">${flags.map(f => FLAG_TEXT[f]).join(' · ')}</span>`
+      : '';
+    const lat = d.latency_ms || {};
+
+    const dbgRows = (d.debug || []).map(x => `
+      <tr><td>${esc(x.doc_id)}</td><td>${esc(x.section||'—')}</td>
+          <td>${x.confidence.toFixed(3)}</td><td>${x.dense.toFixed(3)}</td><td>${x.sparse.toFixed(2)}</td></tr>`).join('');
+
+    return `<div class="bubble">${body}</div>
+      ${figs}
+      ${cites ? `<div class="cites">${cites}</div>` : ''}
+      <div class="meta">
+        <span>引用 ${(d.citations||[]).length} 条</span>
+        <span>检索 ${lat.retrieve ?? '-'} ms</span>
+        <span>生成 ${lat.generate ?? '-'} ms</span>
+        <span>${d.tier === 'private' ? '内网模型' : '云端模型'}</span>${flagTxt}
+      </div>
+      ${dbgRows ? `<details class="dbg"><summary>检索详情</summary>
+        <table><thead><tr><th>文档</th><th>章节</th><th>置信度</th><th>向量</th><th>BM25</th></tr></thead>
+        <tbody>${dbgRows}</tbody></table></details>` : ''}`;
+  }
+
+  stream.addEventListener('click', e => {
+    const ref = e.target.closest('.cite-ref');
+    if(ref){
+      const btn = stream.querySelector(`.cite[data-k="${+ref.dataset.ref - 1}"]`);
+      if(btn){ btn.click(); btn.scrollIntoView({block:'nearest', behavior:'smooth'}); }
+      return;
+    }
+    const c = e.target.closest('.cite');
+    if(c){
+      const s = $('#snip-' + c.dataset.k);
+      if(s){ s.classList.toggle('open'); }
+      return;
+    }
+    const im = e.target.closest('.figs img');
+    if(im){
+      const lb = $('#lb');
+      lb.querySelector('img').src = im.dataset.full || im.src;
+      lb.classList.add('on');
+    }
+  });
+
+  // 光箱挂在 document 上：脚下这段脚本执行时 #lb 还没进 DOM，不能直接绑
+  document.addEventListener('click', e => {
+    const lb = $('#lb');
+    if(lb && e.target.closest('#lb')) lb.classList.remove('on');
+  });
+  document.addEventListener('keydown', e => {
+    const lb = $('#lb');
+    if(e.key === 'Escape' && lb) lb.classList.remove('on');
+  });
+
+  // SSE 读取：把 ReadableStream 按 \n\n 切事件。不用 EventSource 是因为它只支持 GET，
+  // 问题要放 body 里传（长度 + 不被日志/代理缓存）。
+  async function streamAsk(body, onEvent){
+    const res = await fetch(KB_URL('/ask/stream'), {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    if(!res.ok || !res.body) throw new Error('HTTP ' + res.status);
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let acc = '';
+    for(;;){
+      const {value, done} = await reader.read();
+      if(done) break;
+      acc += dec.decode(value, {stream:true});
+      let i;
+      while((i = acc.indexOf('\n\n')) >= 0){
+        const chunk = acc.slice(0, i); acc = acc.slice(i + 2);
+        const line = chunk.split('\n').find(l => l.startsWith('data:'));
+        if(!line) continue;
+        try{ onEvent(JSON.parse(line.slice(5).trim())); }catch(e){ /* 半包，忽略 */ }
+      }
+    }
+  }
+
+  async function ask(text){
+    if(busy || !text.trim()) return;
+    busy = true; sendBtn.disabled = true;
+    $('#welcome') && $('#welcome').remove();
+
+    addTurn('user', `<div class="bubble">${esc(text)}</div>`);
+    const ph = addTurn('bot', `<div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>`);
+    const box = ph.lastElementChild;
+    let buf = '', t0 = performance.now(), firstAt = 0;
+
+    const paint = () => {
+      box.innerHTML = `<div class="bubble streaming">${esc(buf)}</div>`;
+      msgs.scrollTop = msgs.scrollHeight;
+    };
+
+    try{
+      await streamAsk({question:text, top_k:3}, ev => {
+        if(ev.type === 'token'){
+          if(!firstAt){ firstAt = performance.now(); }
+          buf += ev.text; paint();
+        }else if(ev.type === 'error'){
+          buf += `\n（${ev.message}）`; paint();
+        }else if(ev.type === 'final'){
+          // 最终一定走这里：引用卡片、截图、耗时都靠它渲染。
+          // 被溯源校验拦截时 ev.replace=true，answer 已是降级原文，直接整段替换。
+          box.innerHTML = answerHTML(ev);
+          msgs.scrollTop = msgs.scrollHeight;
+        }
+      });
+    }catch(e){
+      const sec = ((performance.now() - t0)/1000).toFixed(1);
+      box.innerHTML = `<div class="bubble"><span style="color:var(--bad)">请求失败：${esc(e.message)}</span>
+        <br><span style="color:var(--ink3);font-size:12.5px">已等待 ${sec}s。请确认后端服务在运行。</span></div>`;
+    }finally{
+      busy = false; sendBtn.disabled = !qEl.value.trim();
+    }
+  }
+
+  function autosize(){
+    qEl.style.height = 'auto';
+    qEl.style.height = Math.min(qEl.scrollHeight, 140) + 'px';
+  }
+  qEl.addEventListener('input', () => {
+    autosize();
+    sendBtn.disabled = busy || !qEl.value.trim();
+  });
+  qEl.addEventListener('keydown', e => {
+    if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){
+      e.preventDefault();
+      const t = qEl.value; qEl.value = ''; autosize(); sendBtn.disabled = true;
+      ask(t);
+    }
+  });
+  sendBtn.onclick = () => { const t = qEl.value; qEl.value=''; autosize(); ask(t); };
+
+  $('#sampleChips').addEventListener('click', e => {
+    const c = e.target.closest('.chip');
+    if(c) ask(c.textContent);
+  });
+
+  refresh();
+  setInterval(() => { if(!busy) refresh(); }, 15000);
+})();
+</script>
+<div id="lb"><img alt="截图"></div>
+</body></html>
