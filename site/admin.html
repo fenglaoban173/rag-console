@@ -88,8 +88,9 @@
     <div class="logo">知</div>
     <h1>知识库后台<small>文档维护 · 索引状态 · 模型配置</small></h1>
     <span class="pill" id="svcPill"><span class="dot"></span><span id="svcText">连接中…</span></span>
-    <a class="btn" href="demo.html" target="_blank">悬浮窗演示</a>
     <a class="btn" href="index.html">对话台</a>
+    <a class="btn" href="demo.html" target="_blank">悬浮窗演示</a>
+    <a class="btn" href="embed.html" target="_blank">内嵌页</a>
   </div>
 </div>
 
@@ -302,7 +303,12 @@ $('#btnReset').onclick = async ()=>{
   }catch(e){
     $('#svcText').textContent = '服务异常';
     $('#svcPill').className = 'pill warn';
-    $('#docBox').innerHTML = `<div class="line bad">无法连接服务：${esc(e.message)}</div>`;
+    // 静态托管时「连不上」多半不是服务挂了，而是压根没告诉页面往哪儿发请求
+    const hint = KB_API_BASE
+      ? `连不上 <b>${esc(KB_API_BASE)}</b>。`
+      : `页面托管在 <b>${esc(location.host)}</b>，请求打到了这里（这里没有后端）。`;
+    $('#docBox').innerHTML = `<div class="line bad">无法连接服务：${esc(e.message)}<br><br>${hint}<br>` +
+      `接法：地址栏加 <code>?api=http://主机:8090</code> 指向后端；若由后端自己发这个页面（同源），不用管。</div>`;
   }
 })();
 </script>

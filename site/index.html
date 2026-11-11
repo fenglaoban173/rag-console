@@ -47,6 +47,19 @@
     display:none;border:1px solid var(--line);background:#fff;color:var(--ink2);
     border-radius:8px;padding:5px 10px;font-size:12.5px;cursor:pointer;
   }
+  /* 页面之间的导航：后台、演示这些页面得一眼看得见，
+     不能只藏在某个折叠面板里 —— 静态托管时没有别的地方能点到它们 */
+  .navlinks{display:flex;gap:2px;align-items:center;flex:0 0 auto}
+  .navlinks a{
+    font-size:12.5px;color:var(--ink2);text-decoration:none;white-space:nowrap;
+    padding:5px 10px;border-radius:8px;
+  }
+  .navlinks a:hover{background:var(--accent-soft);color:var(--accent)}
+  .navlinks a.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  @media (max-width:860px){
+    header{height:auto;min-height:56px;flex-wrap:wrap;padding:8px 12px;row-gap:8px}
+    .navlinks{order:5;width:100%;overflow-x:auto}
+  }
 
   /* ---------- layout ---------- */
   .body{flex:1;display:flex;min-height:0}
@@ -61,6 +74,17 @@
     font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);
     font-weight:600;margin-bottom:10px;
   }
+  /* 四个页面的入口清单：静态托管时没有别的导航条，
+     这个块保证「后台 / 演示 / 内嵌页」在哪都点得到 */
+  .pagelist{display:flex;flex-direction:column;gap:6px}
+  .pagelist a{
+    display:flex;flex-direction:column;gap:1px;text-decoration:none;
+    border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:#fff;
+  }
+  .pagelist a:hover{border-color:#bcd8d6;background:var(--accent-soft)}
+  .pagelist a.on{border-color:#bcd8d6;background:var(--accent-soft)}
+  .pagelist b{font-size:12.5px;color:var(--ink);font-weight:600}
+  .pagelist span{font-size:11.5px;color:var(--ink3)}
   .linkbtn{
     background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;
     padding:2px 4px;border-radius:4px;letter-spacing:0;text-transform:none;
@@ -256,6 +280,12 @@
     <div class="logo">R</div>
     <div class="title">知识库问答<small>检索增强 · 带引用 · 可拒答</small></div>
     <div class="spacer"></div>
+    <nav class="navlinks">
+      <a href="index.html" class="on">对话台</a>
+      <a href="admin.html">文档后台</a>
+      <a href="demo.html">悬浮窗演示</a>
+      <a href="embed.html">内嵌页</a>
+    </nav>
     <div class="pill" style="background:var(--ok-soft);color:var(--ok);border-color:#cfe7d9">封闭域 · 仅依据文档</div>
     <div class="pill" id="statusPill"><span class="dot"></span><span id="statusText">连接中…</span></div>
     <button class="iconbtn" id="sideToggle">知识库</button>
@@ -287,6 +317,16 @@
         <div class="side-block">
           <div class="side-h">当前配置</div>
           <div class="empty-hint" id="cfg" style="line-height:1.9">—</div>
+        </div>
+
+        <div class="side-block">
+          <div class="side-h">页面</div>
+          <div class="pagelist">
+            <a href="index.html" class="on"><b>对话台</b><span>上传 · 问答 · 检索详情</span></a>
+            <a href="admin.html"><b>文档后台</b><span>文档维护 · 索引状态 · 模型配置</span></a>
+            <a href="demo.html"><b>悬浮窗演示</b><span>一行 script 接进任意系统页面</span></a>
+            <a href="embed.html"><b>内嵌页</b><span>悬浮窗里那个紧凑对话页</span></a>
+          </div>
         </div>
       </div>
       <div class="side-foot">
@@ -370,7 +410,14 @@
     }catch(e){
       $('#statusPill').className = 'pill warn';
       $('#statusText').textContent = '服务未连接';
-      $('#cfg').innerHTML = '<b style="color:var(--bad)">未连接到后端</b><br>请确认 uvicorn 已启动。';
+      // 断开的两种情况给两种说法：静态托管时「去启动 uvicorn」是废话
+      const where = KB_API_BASE || location.origin;
+      const hint = KB_API_BASE
+        ? `连不上 <b>${esc(KB_API_BASE)}</b>。`
+        : `页面托管在 <b>${esc(location.host)}</b>，请求打到了这里（这里没有后端）。`;
+      $('#cfg').innerHTML = '<b style="color:var(--bad)">未连接到后端</b><br>' + hint +
+        '<br>接法：地址栏加 <code>?api=http://主机:8090</code> 指向后端；' +
+        '若由后端自己发这个页面（同源），不用管。';
     }
   }
 
